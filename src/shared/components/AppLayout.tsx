@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users, LogOut, Sprout } from 'lucide-react';
+import { LayoutGrid, Users, LogOut, Sprout, ListChecks, CalendarClock } from 'lucide-react';
 import { useAuthStore } from '@/shared/store/auth-store';
 import { canInviteUsers } from '@/shared/lib/role-helper';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,14 @@ export function AppLayout() {
           <NavLink to="/fincas" className={navItemClass}>
             <LayoutGrid className="size-4" />
             Fincas
+          </NavLink>
+          <NavLink to="/tareas" className={navItemClass}>
+            <ListChecks className="size-4" />
+            Tareas
+          </NavLink>
+          <NavLink to="/turnos" className={navItemClass}>
+            <CalendarClock className="size-4" />
+            Turnos
           </NavLink>
           {session && canInviteUsers(session.role) && (
             <NavLink to="/usuarios" className={navItemClass}>

@@ -65,6 +65,9 @@ export interface CropComparison {
   status: string;
   yieldKg?: number | null;
   totalCost: number;
+  areaHa?: number | null;
+  yieldPerHa?: number | null;
+  costPerHa?: number | null;
 }
 
 export interface CropPrediction {
@@ -79,6 +82,7 @@ export interface MonthlyCost {
   month: number;
   fertilizationCost: number;
   laborCost: number;
+  irrigationCost: number;
   totalCost: number;
 }
 
@@ -143,4 +147,64 @@ export interface AppUser {
   isActive: boolean;
   lastLoginAt?: string | null;
   createdAt: string;
+}
+
+export interface Task {
+  id: string;
+  createdBy: string;
+  assignedTo: string;
+  assigneeName: string;
+  creatorName: string;
+  plotId?: string | null;
+  plotName?: string | null;
+  cropId?: string | null;
+  cropName?: string | null;
+  title: string;
+  description?: string | null;
+  priority: string;
+  status: string;
+  taskType: string;
+  dueDate: string;
+  completedAt?: string | null;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface TaskTemplate {
+  id: string;
+  createdBy: string;
+  creatorName: string;
+  plotId?: string | null;
+  plotName?: string | null;
+  cropId?: string | null;
+  cropName?: string | null;
+  title: string;
+  description?: string | null;
+  taskType: string;
+  priority: string;
+  shift: string;
+  recurrenceType: string;
+  weekDays?: string | null;
+  startDate: string;
+  endDate?: string | null;
+  isActive: boolean;
+  occurrenceCount: number;
+  createdAt: string;
+}
+
+export interface TaskOccurrence {
+  id: string;
+  templateId: string;
+  templateTitle: string;
+  taskType: string;
+  priority: string;
+  assignedTo?: string | null;
+  assigneeName?: string | null;
+  plotName?: string | null;
+  cropName?: string | null;
+  scheduledDate: string;
+  shift: string;
+  status: string;
+  completedAt?: string | null;
+  notes?: string | null;
 }

@@ -11,3 +11,4 @@ export const canCreateCrop = (role: string) => isFarmer(role);
 export const canRegisterActivity = (role: string) => isFarmer(role);
 export const canManageSensors = (role: string) => isManager(role);
 export const canInviteUsers = (role: string) => isAdmin(role);
+export const canManageTasks = (role: string) => isManager(role);

@@ -5,6 +5,7 @@ import { getCropPrediction, getCrops } from '@/features/crops/api/crops-api';
 import { ActivityTimeline } from '@/features/crops/components/ActivityTimeline';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export function PlotDetailPage() {
   const { farmId, plotId } = useParams<{ farmId: string; plotId: string }>();
@@ -22,6 +23,7 @@ export function PlotDetailPage() {
   });
 
   const activeCrop = crops?.find((c) => c.status !== 'Harvested') ?? crops?.[0];
+  const pastCrops = crops?.filter((c) => c.id !== activeCrop?.id) ?? [];
 
   const { data: prediction } = useQuery({
     queryKey: ['crop-prediction', plotId, activeCrop?.id],
@@ -89,6 +91,44 @@ export function PlotDetailPage() {
       )}
 
       {activeCrop && <ActivityTimeline cropId={activeCrop.id} />}
+
+      {!cropsLoading && pastCrops.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Historial de rotación</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cultivo</TableHead>
+                  <TableHead>Variedad</TableHead>
+                  <TableHead>Siembra</TableHead>
+                  <TableHead>Cosecha</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Rendimiento (kg)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pastCrops.map((crop) => (
+                  <TableRow key={crop.id}>
+                    <TableCell>{crop.cropType}</TableCell>
+                    <TableCell>{crop.variety ?? '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{crop.plantedAt}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {crop.harvestedAt ?? '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{crop.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{crop.yieldKg ?? '—'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -4,8 +4,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -38,7 +36,12 @@ export function ReportsPage() {
     enabled: !!farmId,
   });
 
-  const costData = costHistory?.map((c) => ({ label: monthLabel(c.year, c.month), total: c.totalCost }));
+  const costData = costHistory?.map((c) => ({
+    label: monthLabel(c.year, c.month),
+    riego: c.irrigationCost,
+    fertilización: c.fertilizationCost,
+    labor: c.laborCost,
+  }));
   const yieldData = yieldHistory?.map((y) => ({ label: monthLabel(y.year, y.month), kg: y.totalYieldKg }));
 
   return (
@@ -51,13 +54,15 @@ export function ReportsPage() {
         </CardHeader>
         <CardContent className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={costData}>
+            <BarChart data={costData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="label" fontSize={12} />
               <YAxis fontSize={12} />
               <Tooltip />
-              <Line type="monotone" dataKey="total" stroke="#16a34a" strokeWidth={2} />
-            </LineChart>
+              <Bar dataKey="riego" stackId="cost" fill="#0ea5e9" />
+              <Bar dataKey="fertilización" stackId="cost" fill="#a855f7" />
+              <Bar dataKey="labor" stackId="cost" fill="#16a34a" />
+            </BarChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
@@ -92,7 +97,9 @@ export function ReportsPage() {
                 <TableHead>Variedad</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Rendimiento (kg)</TableHead>
+                <TableHead className="text-right">Rendimiento/ha</TableHead>
                 <TableHead className="text-right">Costo total</TableHead>
+                <TableHead className="text-right">Costo/ha</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -103,12 +110,18 @@ export function ReportsPage() {
                   <TableCell>{row.variety ?? '—'}</TableCell>
                   <TableCell>{row.status}</TableCell>
                   <TableCell className="text-right">{row.yieldKg ?? '—'}</TableCell>
+                  <TableCell className="text-right">
+                    {row.yieldPerHa != null ? row.yieldPerHa.toFixed(1) : '—'}
+                  </TableCell>
                   <TableCell className="text-right">${row.totalCost.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">
+                    {row.costPerHa != null ? `$${row.costPerHa.toFixed(2)}` : '—'}
+                  </TableCell>
                 </TableRow>
               ))}
               {comparison?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     Sin datos de cultivos para esta finca.
                   </TableCell>
                 </TableRow>
