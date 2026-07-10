@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { getMonthlyCostHistory, getYieldHistory } from '@/features/reports/api/reports-api';
 import { getCropComparison } from '@/features/crops/api/crops-api';
+import { getPestDiagnosisSummary } from '@/features/farms/api/farms-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -33,6 +34,12 @@ export function ReportsPage() {
   const { data: comparison } = useQuery({
     queryKey: ['crop-comparison', farmId],
     queryFn: () => getCropComparison(farmId!),
+    enabled: !!farmId,
+  });
+
+  const { data: pestSummary } = useQuery({
+    queryKey: ['pest-diagnosis-summary', farmId],
+    queryFn: () => getPestDiagnosisSummary(farmId!),
     enabled: !!farmId,
   });
 
@@ -100,6 +107,9 @@ export function ReportsPage() {
                 <TableHead className="text-right">Rendimiento/ha</TableHead>
                 <TableHead className="text-right">Costo total</TableHead>
                 <TableHead className="text-right">Costo/ha</TableHead>
+                <TableHead className="text-right">Ingresos</TableHead>
+                <TableHead className="text-right">Margen</TableHead>
+                <TableHead className="text-right">Margen/ha</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -117,17 +127,61 @@ export function ReportsPage() {
                   <TableCell className="text-right">
                     {row.costPerHa != null ? `$${row.costPerHa.toFixed(2)}` : '—'}
                   </TableCell>
+                  <TableCell className="text-right">${row.totalRevenue.toFixed(2)}</TableCell>
+                  <TableCell
+                    className={`text-right ${row.margin < 0 ? 'text-destructive' : ''}`}
+                  >
+                    ${row.margin.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {row.marginPerHa != null ? `$${row.marginPerHa.toFixed(2)}` : '—'}
+                  </TableCell>
                 </TableRow>
               ))}
               {comparison?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground">
                     Sin datos de cultivos para esta finca.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Incidencia de plagas/enfermedades</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!pestSummary?.length && (
+            <p className="text-muted-foreground">
+              Sin detecciones de plagas o enfermedades registradas.
+            </p>
+          )}
+          {!!pestSummary?.length && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Condición</TableHead>
+                  <TableHead className="text-right">Casos</TableHead>
+                  <TableHead>Última detección</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pestSummary.map((s) => (
+                  <TableRow key={s.condition}>
+                    <TableCell>{s.condition}</TableCell>
+                    <TableCell className="text-right">{s.count}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(s.lastDetectedAt).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

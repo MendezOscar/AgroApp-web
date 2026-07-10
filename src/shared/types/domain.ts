@@ -34,6 +34,19 @@ export interface FarmSummary {
   unresolvedAlertCount: number;
 }
 
+export interface SoilAnalysis {
+  id: string;
+  plotId: string;
+  analyzedAt: string;
+  ph?: number | null;
+  nitrogenPct?: number | null;
+  phosphorusPct?: number | null;
+  potassiumPct?: number | null;
+  organicMatterPct?: number | null;
+  notes?: string | null;
+  createdAt: string;
+}
+
 export interface PlotGeo {
   id: string;
   name: string;
@@ -68,6 +81,15 @@ export interface CropComparison {
   areaHa?: number | null;
   yieldPerHa?: number | null;
   costPerHa?: number | null;
+  totalRevenue: number;
+  margin: number;
+  marginPerHa?: number | null;
+}
+
+export interface PestDiagnosisSummary {
+  condition: string;
+  count: number;
+  lastDetectedAt: string;
 }
 
 export interface CropPrediction {
