@@ -4,6 +4,7 @@ export interface TurnoGroup {
   key: string;
   shift: string;
   recurrenceType: string;
+  weekDays: string | null;
   startDate: string;
   endDate: string | null;
   templates: TaskTemplate[];
@@ -22,6 +23,7 @@ export function groupTemplatesIntoTurnos(templates: TaskTemplate[]): TurnoGroup[
         key,
         shift: template.shift,
         recurrenceType: template.recurrenceType,
+        weekDays: template.weekDays ?? null,
         startDate: template.startDate,
         endDate: template.endDate ?? null,
         templates: [template],

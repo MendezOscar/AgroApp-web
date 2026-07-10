@@ -92,6 +92,16 @@ export interface PestDiagnosisSummary {
   lastDetectedAt: string;
 }
 
+export interface PendingCostActivity {
+  id: string;
+  activityType: 'Irrigation' | 'Fertilization' | 'Labor';
+  cropId: string;
+  cropType: string;
+  plotName?: string | null;
+  date: string;
+  description: string;
+}
+
 export interface CropPrediction {
   predictedYieldKg?: number | null;
   yieldBasis?: string | null;

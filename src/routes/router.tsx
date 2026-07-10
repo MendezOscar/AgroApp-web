@@ -10,7 +10,8 @@ import { ReportsPage } from '@/features/reports/pages/ReportsPage';
 import { TasksPage } from '@/features/tasks/pages/TasksPage';
 import { ShiftsPage } from '@/features/shifts/pages/ShiftsPage';
 import { UsersPage } from '@/features/users/pages/UsersPage';
-import { canInviteUsers } from '@/shared/lib/role-helper';
+import { CostsPage } from '@/features/costs/pages/CostsPage';
+import { canInviteUsers, canManageCosts } from '@/shared/lib/role-helper';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -30,6 +31,10 @@ export const router = createBrowserRouter([
           {
             element: <RequireRole check={canInviteUsers} />,
             children: [{ path: 'usuarios', element: <UsersPage /> }],
+          },
+          {
+            element: <RequireRole check={canManageCosts} />,
+            children: [{ path: 'fincas/:farmId/costos', element: <CostsPage /> }],
           },
         ],
       },

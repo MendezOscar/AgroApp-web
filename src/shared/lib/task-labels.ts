@@ -1,4 +1,8 @@
 export const TASK_TYPES = ['Irrigation', 'Fertilization', 'Labor', 'Inspection', 'Sensor', 'Other'] as const;
+// Estas tareas se completan registrando la actividad correspondiente (ver
+// UpdateOccurrenceStatusCommandHandler en el backend), lo cual exige un
+// cultivo asociado (IrrigationLog/FertilizationLog/LaborLog.CropId no es nulo).
+export const CROP_RELATED_TASK_TYPES = ['Irrigation', 'Fertilization', 'Labor'] as const;
 export const TASK_PRIORITIES = ['Low', 'Medium', 'High', 'Urgent'] as const;
 export const TASK_STATUSES = ['Pending', 'InProgress', 'Completed', 'Cancelled'] as const;
 export const SHIFTS = ['Day', 'Night'] as const;

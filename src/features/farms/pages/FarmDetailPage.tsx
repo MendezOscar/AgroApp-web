@@ -5,10 +5,13 @@ import { getFarmPlotsGeo } from '@/features/plots/api/plots-api';
 import { PlotsMap } from '@/shared/components/PlotsMap';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/shared/store/auth-store';
+import { canManageCosts } from '@/shared/lib/role-helper';
 
 export function FarmDetailPage() {
   const { farmId } = useParams<{ farmId: string }>();
   const navigate = useNavigate();
+  const session = useAuthStore((s) => s.session);
 
   const { data: farm } = useQuery({
     queryKey: ['farm', farmId],
@@ -34,9 +37,16 @@ export function FarmDetailPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{farm?.name ?? 'Finca'}</h1>
-        <Button asChild variant="outline">
-          <Link to={`/fincas/${farmId}/reportes`}>Ver reportes</Link>
-        </Button>
+        <div className="flex gap-2">
+          {session && canManageCosts(session.role) && (
+            <Button asChild variant="outline">
+              <Link to={`/fincas/${farmId}/costos`}>Costos pendientes</Link>
+            </Button>
+          )}
+          <Button asChild variant="outline">
+            <Link to={`/fincas/${farmId}/reportes`}>Ver reportes</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">

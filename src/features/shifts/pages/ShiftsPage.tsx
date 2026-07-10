@@ -9,13 +9,14 @@ import {
 } from '@/features/shifts/api/shifts-api';
 import { getFarms } from '@/features/farms/api/farms-api';
 import { getUsers } from '@/features/users/api/users-api';
-import { groupTemplatesIntoTurnos } from '@/features/shifts/lib/group-templates';
+import { groupTemplatesIntoTurnos, type TurnoGroup } from '@/features/shifts/lib/group-templates';
 import { emptyTaskRow, TaskRowFields, type TaskRow } from '@/features/shifts/components/TaskRowFields';
 import { useAuthStore } from '@/shared/store/auth-store';
 import { canManageTasks } from '@/shared/lib/role-helper';
 import {
   SHIFTS,
   RECURRENCE_TYPES,
+  CROP_RELATED_TASK_TYPES,
   taskTypeLabels,
   priorityLabels,
   statusLabels,
@@ -60,6 +61,10 @@ export function ShiftsPage() {
   const [shiftForm, setShiftForm] = useState(emptyShiftForm);
   const [taskRows, setTaskRows] = useState<TaskRow[]>([emptyTaskRow(newRowId())]);
   const [occurrenceDate, setOccurrenceDate] = useState(todayIso());
+  const [taskRowsError, setTaskRowsError] = useState<string | null>(null);
+  const [addTaskGroup, setAddTaskGroup] = useState<TurnoGroup | null>(null);
+  const [addTaskRow, setAddTaskRow] = useState<TaskRow>(emptyTaskRow(newRowId()));
+  const [addTaskError, setAddTaskError] = useState<string | null>(null);
 
   const { data: templates, isLoading: templatesLoading } = useQuery({
     queryKey: ['task-templates'],
@@ -72,7 +77,22 @@ export function ShiftsPage() {
   });
 
   const { data: users } = useQuery({ queryKey: ['users'], queryFn: getUsers });
-  const { data: farms } = useQuery({ queryKey: ['farms'], queryFn: getFarms, enabled: shiftDialogOpen });
+  const { data: farms } = useQuery({
+    queryKey: ['farms'],
+    queryFn: getFarms,
+    enabled: shiftDialogOpen || !!addTaskGroup,
+  });
+
+  function validateTaskRows(rows: TaskRow[]): string | null {
+    for (const row of rows) {
+      if ((CROP_RELATED_TASK_TYPES as readonly string[]).includes(row.taskType) && !row.cropId) {
+        return `La tarea "${row.title || taskTypeLabels[row.taskType]}" es de tipo ${
+          taskTypeLabels[row.taskType]
+        } y necesita un cultivo asignado — si no, no se podrá completar registrando la actividad.`;
+      }
+    }
+    return null;
+  }
 
   const createTurno = useMutation({
     mutationFn: async () => {
@@ -99,6 +119,34 @@ export function ShiftsPage() {
       setShiftDialogOpen(false);
       setShiftForm(emptyShiftForm);
       setTaskRows([emptyTaskRow(newRowId())]);
+      setTaskRowsError(null);
+    },
+  });
+
+  const addTaskToGroup = useMutation({
+    mutationFn: async () => {
+      if (!addTaskGroup) return;
+      await createTaskTemplate({
+        plotId: addTaskRow.plotId || null,
+        cropId: addTaskRow.cropId || null,
+        title: addTaskRow.title,
+        description: addTaskRow.description || null,
+        taskType: addTaskRow.taskType,
+        priority: addTaskRow.priority,
+        shift: addTaskGroup.shift,
+        recurrenceType: addTaskGroup.recurrenceType,
+        weekDays: addTaskGroup.weekDays,
+        startDate: addTaskGroup.startDate,
+        endDate: addTaskGroup.endDate,
+        requiredPhenologyStage: addTaskRow.requiredPhenologyStage || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['occurrences'] });
+      setAddTaskGroup(null);
+      setAddTaskRow(emptyTaskRow(newRowId()));
+      setAddTaskError(null);
     },
   });
 
@@ -123,6 +171,12 @@ export function ShiftsPage() {
     setTaskRows((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
 
+  function isCurrentTurno(group: TurnoGroup): boolean {
+    const today = todayIso();
+    if (group.recurrenceType === 'Once') return group.startDate === today;
+    return group.startDate <= today && (!group.endDate || group.endDate >= today);
+  }
+
   const turnoGroups = groupTemplatesIntoTurnos(templates ?? []);
   const dayOccurrences = occurrences?.filter((o) => o.shift === 'Day') ?? [];
   const nightOccurrences = occurrences?.filter((o) => o.shift === 'Night') ?? [];
@@ -144,6 +198,9 @@ export function ShiftsPage() {
                 className="flex flex-col gap-4"
                 onSubmit={(e) => {
                   e.preventDefault();
+                  const error = validateTaskRows(taskRows);
+                  setTaskRowsError(error);
+                  if (error) return;
                   createTurno.mutate();
                 }}
               >
@@ -249,6 +306,8 @@ export function ShiftsPage() {
                   </Button>
                 </div>
 
+                {taskRowsError && <p className="text-sm text-destructive">{taskRowsError}</p>}
+
                 <DialogFooter>
                   <Button type="submit" disabled={createTurno.isPending}>
                     {createTurno.isPending ? 'Creando...' : 'Crear turno'}
@@ -275,6 +334,9 @@ export function ShiftsPage() {
                 <Badge variant={group.shift === 'Day' ? 'default' : 'secondary'}>
                   {shiftLabels[group.shift] ?? group.shift}
                 </Badge>
+                {isCurrentTurno(group) && (
+                  <Badge className="bg-amber-500 text-white hover:bg-amber-500">Vigente hoy</Badge>
+                )}
                 <span className="text-sm font-medium">
                   {recurrenceLabels[group.recurrenceType] ?? group.recurrenceType}
                 </span>
@@ -282,6 +344,21 @@ export function ShiftsPage() {
                   {group.startDate}
                   {group.endDate ? ` → ${group.endDate}` : ''}
                 </span>
+                {canManage && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() => {
+                      setAddTaskRow(emptyTaskRow(newRowId()));
+                      setAddTaskError(null);
+                      setAddTaskGroup(group);
+                    }}
+                  >
+                    + Tarea
+                  </Button>
+                )}
               </div>
               <Table>
                 <TableHeader>
@@ -406,6 +483,51 @@ export function ShiftsPage() {
             ))}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={!!addTaskGroup}
+        onOpenChange={(open) => !open && setAddTaskGroup(null)}
+      >
+        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Agregar tarea al turno {addTaskGroup ? shiftLabels[addTaskGroup.shift] : ''}
+            </DialogTitle>
+          </DialogHeader>
+          {addTaskGroup && (
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const error = validateTaskRows([addTaskRow]);
+                setAddTaskError(error);
+                if (error) return;
+                addTaskToGroup.mutate();
+              }}
+            >
+              <p className="text-sm text-muted-foreground">
+                {recurrenceLabels[addTaskGroup.recurrenceType] ?? addTaskGroup.recurrenceType} ·{' '}
+                {addTaskGroup.startDate}
+                {addTaskGroup.endDate ? ` → ${addTaskGroup.endDate}` : ''}
+              </p>
+              <TaskRowFields
+                row={addTaskRow}
+                index={0}
+                farms={farms}
+                canRemove={false}
+                onChange={(patch) => setAddTaskRow((row) => ({ ...row, ...patch }))}
+                onRemove={() => {}}
+              />
+              {addTaskError && <p className="text-sm text-destructive">{addTaskError}</p>}
+              <DialogFooter>
+                <Button type="submit" disabled={addTaskToGroup.isPending}>
+                  {addTaskToGroup.isPending ? 'Agregando...' : 'Agregar tarea'}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

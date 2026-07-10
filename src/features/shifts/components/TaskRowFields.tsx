@@ -1,13 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { getPlots } from '@/features/plots/api/plots-api';
 import { getCrops, getPhenologyTemplates } from '@/features/crops/api/crops-api';
-import { TASK_TYPES, TASK_PRIORITIES, taskTypeLabels, priorityLabels } from '@/shared/lib/task-labels';
+import {
+  TASK_TYPES,
+  TASK_PRIORITIES,
+  CROP_RELATED_TASK_TYPES,
+  taskTypeLabels,
+  priorityLabels,
+} from '@/shared/lib/task-labels';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import type { Farm } from '@/shared/types/domain';
-
-const CROP_RELATED_TYPES = ['Irrigation', 'Fertilization', 'Labor'];
 
 export interface TaskRow {
   id: string;
@@ -49,7 +53,7 @@ export function TaskRowFields({ row, index, farms, onChange, onRemove, canRemove
     enabled: !!row.farmId,
   });
 
-  const showCropSelect = CROP_RELATED_TYPES.includes(row.taskType);
+  const showCropSelect = (CROP_RELATED_TASK_TYPES as readonly string[]).includes(row.taskType);
   const { data: crops } = useQuery({
     queryKey: ['plot-crops', row.plotId],
     queryFn: () => getCrops(row.plotId),
@@ -117,11 +121,12 @@ export function TaskRowFields({ row, index, farms, onChange, onRemove, canRemove
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label>Finca (opcional)</Label>
+          <Label>Finca {showCropSelect ? '*' : '(opcional)'}</Label>
           <select
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={row.farmId}
             onChange={(e) => onChange({ farmId: e.target.value, plotId: '', cropId: '' })}
+            required={showCropSelect}
           >
             <option value="">—</option>
             {farms?.map((farm) => (
@@ -132,12 +137,13 @@ export function TaskRowFields({ row, index, farms, onChange, onRemove, canRemove
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>Parcela (opcional)</Label>
+          <Label>Parcela {showCropSelect ? '*' : '(opcional)'}</Label>
           <select
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={row.plotId}
             onChange={(e) => onChange({ plotId: e.target.value, cropId: '' })}
             disabled={!row.farmId}
+            required={showCropSelect}
           >
             <option value="">—</option>
             {plots?.map((plot) => (
@@ -151,11 +157,12 @@ export function TaskRowFields({ row, index, farms, onChange, onRemove, canRemove
 
       {showCropSelect && row.plotId && (
         <div className="flex flex-col gap-1.5">
-          <Label>Cultivo (opcional)</Label>
+          <Label>Cultivo *</Label>
           <select
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={row.cropId}
             onChange={(e) => onChange({ cropId: e.target.value, requiredPhenologyStage: '' })}
+            required
           >
             <option value="">—</option>
             {crops?.map((crop) => (
