@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getPlots } from '@/features/plots/api/plots-api';
-import { getCrops } from '@/features/crops/api/crops-api';
+import { getCrops, getPhenologyTemplates } from '@/features/crops/api/crops-api';
 import { TASK_TYPES, TASK_PRIORITIES, taskTypeLabels, priorityLabels } from '@/shared/lib/task-labels';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,7 @@ export interface TaskRow {
   farmId: string;
   plotId: string;
   cropId: string;
+  requiredPhenologyStage: string;
 }
 
 export const emptyTaskRow = (id: string): TaskRow => ({
@@ -29,6 +30,7 @@ export const emptyTaskRow = (id: string): TaskRow => ({
   farmId: '',
   plotId: '',
   cropId: '',
+  requiredPhenologyStage: '',
 });
 
 interface TaskRowFieldsProps {
@@ -52,6 +54,13 @@ export function TaskRowFields({ row, index, farms, onChange, onRemove, canRemove
     queryKey: ['plot-crops', row.plotId],
     queryFn: () => getCrops(row.plotId),
     enabled: !!row.plotId && showCropSelect,
+  });
+
+  const selectedCrop = crops?.find((c) => c.id === row.cropId);
+  const { data: phenologyStages } = useQuery({
+    queryKey: ['phenology-templates', selectedCrop?.cropType],
+    queryFn: () => getPhenologyTemplates(selectedCrop!.cropType),
+    enabled: !!selectedCrop?.cropType,
   });
 
   return (
@@ -146,13 +155,31 @@ export function TaskRowFields({ row, index, farms, onChange, onRemove, canRemove
           <select
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={row.cropId}
-            onChange={(e) => onChange({ cropId: e.target.value })}
+            onChange={(e) => onChange({ cropId: e.target.value, requiredPhenologyStage: '' })}
           >
             <option value="">—</option>
             {crops?.map((crop) => (
               <option key={crop.id} value={crop.id}>
                 {crop.cropType}
                 {crop.variety ? ` (${crop.variety})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {showCropSelect && row.cropId && !!phenologyStages?.length && (
+        <div className="flex flex-col gap-1.5">
+          <Label>Solo durante etapa (opcional)</Label>
+          <select
+            className="rounded-md border bg-background px-3 py-2 text-sm"
+            value={row.requiredPhenologyStage}
+            onChange={(e) => onChange({ requiredPhenologyStage: e.target.value })}
+          >
+            <option value="">Cualquier etapa</option>
+            {phenologyStages.map((stage) => (
+              <option key={stage.id} value={stage.stageName}>
+                {stage.stageName}
               </option>
             ))}
           </select>

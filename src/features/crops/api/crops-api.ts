@@ -1,8 +1,15 @@
 import { apiClient } from '@/shared/lib/api-client';
-import type { Crop, CropComparison, CropPrediction } from '@/shared/types/domain';
+import type { Crop, CropComparison, CropPrediction, PhenologyTemplate } from '@/shared/types/domain';
 
 export async function getCrops(plotId: string): Promise<Crop[]> {
   const { data } = await apiClient.get<Crop[]>(`/plots/${plotId}/crops`);
+  return data;
+}
+
+export async function getPhenologyTemplates(cropType: string): Promise<PhenologyTemplate[]> {
+  const { data } = await apiClient.get<PhenologyTemplate[]>(
+    `/phenology/templates/${cropType.toLowerCase()}`,
+  );
   return data;
 }
 

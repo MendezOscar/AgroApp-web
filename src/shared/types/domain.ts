@@ -187,9 +187,22 @@ export interface TaskTemplate {
   weekDays?: string | null;
   startDate: string;
   endDate?: string | null;
+  requiredPhenologyStage?: string | null;
   isActive: boolean;
   occurrenceCount: number;
   createdAt: string;
+}
+
+export interface PhenologyTemplate {
+  id: string;
+  cropType: string;
+  stageName: string;
+  stageOrder: number;
+  description?: string | null;
+  minDays: number;
+  maxDays: number;
+  icon?: string | null;
+  recommendations?: string | null;
 }
 
 export interface TaskOccurrence {

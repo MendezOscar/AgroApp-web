@@ -89,6 +89,7 @@ export function ShiftsPage() {
           weekDays: shiftForm.recurrenceType === 'Weekly' ? shiftForm.weekDays.join(',') : null,
           startDate: shiftForm.startDate,
           endDate: shiftForm.endDate || null,
+          requiredPhenologyStage: row.requiredPhenologyStage || null,
         });
       }
     },
@@ -305,6 +306,9 @@ export function ShiftsPage() {
                       <TableCell className="text-muted-foreground">
                         {template.plotName ?? '—'}
                         {template.cropName ? ` · ${template.cropName}` : ''}
+                        {template.requiredPhenologyStage
+                          ? ` · solo en ${template.requiredPhenologyStage}`
+                          : ''}
                       </TableCell>
                       <TableCell className="text-right">{template.occurrenceCount}</TableCell>
                     </TableRow>

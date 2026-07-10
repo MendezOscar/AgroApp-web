@@ -18,6 +18,7 @@ export interface CreateTaskTemplateInput {
   weekDays?: string | null;
   startDate: string;
   endDate?: string | null;
+  requiredPhenologyStage?: string | null;
 }
 
 export async function createTaskTemplate(input: CreateTaskTemplateInput): Promise<TaskTemplate> {
